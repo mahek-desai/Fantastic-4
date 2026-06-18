@@ -1,0 +1,2 @@
+best_model,val_mae,val_rmse,val_p10,test_mae,test_rmse,test_p10
+Ensemble (Weighted Avg),2.2838,9.489,0.6867,2.4923,11.0854,0.5938

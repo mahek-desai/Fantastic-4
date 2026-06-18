@@ -1,0 +1,18 @@
+# Large raw data files (too large for GitHub, 146MB+)
+dataset/ps1_enhanced_step1_step2.csv
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# CatBoost info directory
+catboost_info/
+
+# Virtual environments
+venv/
+.env/
+
+# OS files
+.DS_Store
+Thumbs.db

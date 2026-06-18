@@ -1,0 +1,15 @@
+metric_name,metric_value
+Total Violations Processed,298450
+Clustered Violations (in Zones),294226
+Noise Violations (outside Zones),4224
+Noise Violations Percentage,1.42%
+Total Geo Clusters (Zones) Detected,539
+Very High Severity Zones,54
+High Severity Zones,108
+Medium Severity Zones,162
+Low Severity Zones,215
+Most Common Police Station in Hotspots,Upparpet
+Peak Hour Violations Share in Hotspots,42.13%
+Top Hotspot Zone ID,ZONE_001
+Top Hotspot Zone Name,Subedar Chatram Road / KR Market Zone
+Top Hotspot Zone Score,100.0
