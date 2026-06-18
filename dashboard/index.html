@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTP Hotspot Intelligence Dashboard — Bengaluru Traffic Police</title>
+    <meta name="description" content="AI-powered traffic violation hotspot detection, risk prediction, and police deployment recommendation system for Bengaluru Traffic Police (BTP).">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Three.js for 3D background -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- Papa Parse for CSV -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- 3D Background Canvas -->
+    <canvas id="bg-canvas-3d"></canvas>
+
+    <!-- Sidebar Navigation -->
+    <nav id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-container">
+                <div class="logo-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"></polygon>
+                        <line x1="12" y1="22" x2="12" y2="15.5"></line>
+                        <polyline points="22 8.5 12 15.5 2 8.5"></polyline>
+                        <polyline points="2 15.5 12 8.5 22 15.5"></polyline>
+                        <line x1="12" y1="2" x2="12" y2="8.5"></line>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <span class="logo-title">BTP Intel</span>
+                    <span class="logo-subtitle">Hotspot Dashboard</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-menu">
+            <button class="nav-btn active" data-page="executive" id="nav-executive">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"></rect><rect x="14" y="3" width="7" height="7" rx="1"></rect><rect x="3" y="14" width="7" height="7" rx="1"></rect><rect x="14" y="14" width="7" height="7" rx="1"></rect></svg>
+                <span>Executive Summary</span>
+            </button>
+            <button class="nav-btn" data-page="map" id="nav-map">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+                <span>Hotspot Map</span>
+            </button>
+            <button class="nav-btn" data-page="rankings" id="nav-rankings">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                <span>Hotspot Rankings</span>
+            </button>
+            <button class="nav-btn" data-page="forecast" id="nav-forecast">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                <span>Forecast & Deploy</span>
+            </button>
+            <button class="nav-btn" data-page="explainability" id="nav-explainability">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                <span>Explainability</span>
+            </button>
+            <button class="nav-btn" data-page="errors" id="nav-errors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                <span>Error Analysis</span>
+            </button>
+            <button class="nav-btn" data-page="comparison" id="nav-comparison">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                <span>Model Comparison</span>
+            </button>
+            <button class="nav-btn" data-page="downloads" id="nav-downloads">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <span>Downloads</span>
+            </button>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="team-badge">
+                <span class="team-icon">🏆</span>
+                <div>
+                    <span class="team-name">Fantastic 4</span>
+                    <span class="team-event">Hackathon 2024</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main id="main-content" class="main-content">
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="loader-container">
+                <div class="loader-spinner"></div>
+                <p class="loader-text">Loading Intelligence Data...</p>
+                <p class="loader-subtext">Parsing CSV datasets</p>
+            </div>
+        </div>
+
+        <!-- Page: Executive Summary -->
+        <section id="page-executive" class="page active">
+            <div class="page-header">
+                <div>
+                    <h1 id="exec-title">Executive Summary</h1>
+                    <p class="page-description">AI-powered traffic violation hotspot detection and predictive deployment system for Bengaluru Traffic Police</p>
+                </div>
+                <div class="header-badge">
+                    <span class="live-dot"></span>
+                    <span>Forecast: 2024-04-09</span>
+                </div>
+            </div>
+
+            <!-- System Description -->
+            <div class="system-banner">
+                <div class="banner-icon">🚔</div>
+                <div class="banner-content">
+                    <strong>What this system does:</strong> Analyzes 298,450+ historical traffic violations across Bengaluru, detects 539 spatial hotspot zones using DBSCAN clustering, predicts next-day violation counts using an ensemble of LightGBM + XGBoost + HistGradientBoosting, and generates actionable police deployment recommendations with manpower estimates and watch windows.
+                </div>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="kpi-grid" id="kpi-grid">
+                <!-- Filled by JS -->
+            </div>
+
+            <!-- Top Zones Summary -->
+            <div class="exec-grid">
+                <div class="card" id="exec-top-hotspot-card">
+                    <div class="card-header">
+                        <h3>🔥 Top Hotspot Zone (Step 3)</h3>
+                    </div>
+                    <div class="card-body" id="exec-top-hotspot">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+                <div class="card" id="exec-top-deploy-card">
+                    <div class="card-header">
+                        <h3>🎯 Top Predicted Deployment (Step 4)</h3>
+                    </div>
+                    <div class="card-body" id="exec-top-deploy">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Severity Distribution -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Zone Severity Distribution</h3>
+                </div>
+                <div class="card-body chart-container">
+                    <canvas id="severity-chart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Page: Hotspot Map -->
+        <section id="page-map" class="page">
+            <div class="page-header">
+                <div>
+                    <h1>Hotspot Map — Bengaluru</h1>
+                    <p class="page-description">Spatial visualization of all 539 hotspot zones with risk bands and deployment recommendations</p>
+                </div>
+            </div>
+
+            <!-- Map Filters -->
+            <div class="filter-bar" id="map-filters">
+                <div class="filter-group">
+                    <label for="filter-band">Hotspot Band</label>
+                    <select id="filter-band">
+                        <option value="all">All Bands</option>
+                        <option value="Very High">Very High</option>
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-police">Police Station</label>
+                    <select id="filter-police">
+                        <option value="all">All Stations</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-time">Time Bucket</label>
+                    <select id="filter-time">
+                        <option value="all">All Times</option>
+                        <option value="morning_peak">Morning Peak</option>
+                        <option value="midday">Midday</option>
+                        <option value="evening_peak">Evening Peak</option>
+                        <option value="night">Night</option>
+                    </select>
+                </div>
+                <button class="btn-reset" id="btn-reset-filters">Reset Filters</button>
+            </div>
+
+            <!-- Map -->
+            <div class="map-wrapper">
+                <div id="hotspot-map" class="map-container"></div>
+                <div class="map-legend">
+                    <h4>Risk Legend</h4>
+                    <div class="legend-item"><span class="legend-dot" style="background:#ef4444"></span> Very High</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#f97316"></span> High</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#eab308"></span> Medium</div>
+                    <div class="legend-item"><span class="legend-dot" style="background:#22c55e"></span> Low</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Page: Rankings -->
+        <section id="page-rankings" class="page">
+            <div class="page-header">
+                <div>
+                    <h1>Hotspot Rankings</h1>
+                    <p class="page-description">Priority ordering of zones, junctions, streets, and police stations for enforcement focus</p>
+                </div>
+            </div>
+
+            <div class="tabs-container">
+                <div class="tabs">
+                    <button class="tab active" data-tab="tab-zone-rank">Top Zones (Step 3)</button>
+                    <button class="tab" data-tab="tab-deploy-rank">Top Deployments (Step 4)</button>
+                    <button class="tab" data-tab="tab-location-rank">Location Rankings</button>
+                </div>
+
+                <div class="tab-content active" id="tab-zone-rank">
+                    <div class="table-wrapper">
+                        <table id="table-zone-rankings" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th data-sort="rank">Rank</th>
+                                    <th data-sort="zone_name">Zone Name</th>
+                                    <th data-sort="total_violations">Total Violations</th>
+                                    <th data-sort="hotspot_score">Hotspot Score</th>
+                                    <th data-sort="hotspot_band">Band</th>
+                                    <th data-sort="top_police_station">Police Station</th>
+                                    <th data-sort="peak_share">Peak Share</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-deploy-rank">
+                    <div class="table-wrapper">
+                        <table id="table-deploy-rankings" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th data-sort="rank">Rank</th>
+                                    <th data-sort="zone_name">Zone Name</th>
+                                    <th data-sort="predicted_next_day_violations">Predicted Violations</th>
+                                    <th data-sort="predicted_risk_score">Risk Score</th>
+                                    <th data-sort="predicted_risk_band">Risk Band</th>
+                                    <th data-sort="manpower_estimate">Manpower</th>
+                                    <th data-sort="time_window_to_watch">Watch Window</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="tab-location-rank">
+                    <div class="filter-bar inline-filter">
+                        <div class="filter-group">
+                            <label for="filter-entity-type">Entity Type</label>
+                            <select id="filter-entity-type">
+                                <option value="all">All Types</option>
+                                <option value="Police Station">Police Station</option>
+                                <option value="Junction">Junction</option>
+                                <option value="Street/Location">Street/Location</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="table-location-rankings" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th data-sort="global_rank">Rank</th>
+                                    <th data-sort="entity_type">Type</th>
+                                    <th data-sort="entity_name">Name</th>
+                                    <th data-sort="hotspot_score">Hotspot Score</th>
+                                    <th data-sort="total_violations">Total Violations</th>
+                                    <th data-sort="peak_hour_violations">Peak Hour Violations</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Page: Forecast & Recommendations -->
+        <section id="page-forecast" class="page">
+            <div class="page-header">
+                <div>
+                    <h1>Forecast & Deployment Plan</h1>
+                    <p class="page-description">Tomorrow's predicted violations with actionable police deployment recommendations</p>
+                </div>
+                <div class="header-badge forecast-badge">
+                    <span>📅 Forecast Date: 2024-04-09</span>
+                </div>
+            </div>
+
+            <!-- Deployment Rules -->
+            <div class="rules-panel">
+                <h3>🚨 Deployment Allocation Rules</h3>
+                <div class="rules-grid">
+                    <div class="rule-card rule-very-high">
+                        <span class="rule-badge">Very High</span>
+                        <p>Towing vehicle + 3 officers + barricade support</p>
+                    </div>
+                    <div class="rule-card rule-high">
+                        <span class="rule-badge">High</span>
+                        <p>2 officers + active patrol monitoring</p>
+                    </div>
+                    <div class="rule-card rule-medium">
+                        <span class="rule-badge">Medium</span>
+                        <p>1 officer / mobile patrol for warning</p>
+                    </div>
+                    <div class="rule-card rule-low">
+                        <span class="rule-badge">Low</span>
+                        <p>No dedicated deployment necessary</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Deployment Plan -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>📋 Top 10 Deployment Plan — Tomorrow</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-wrapper">
+                        <table id="table-deployment-plan" class="data-table deployment-table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Zone Name</th>
+                                    <th>Predicted Violations</th>
+                                    <th>Risk Score</th>
+                                    <th>Risk Band</th>
+                                    <th>Action</th>
+                                    <th>Officers</th>
+                                    <th>Towing?</th>
+                                    <th>Watch Window</th>
+                                </tr>
+                            </thead>
+                            <tbody id="deployment-plan-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Full Forecast Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Full Zone Forecast</h3>
+                    <div class="filter-group inline">
+                        <label for="filter-risk-band">Risk Band</label>
+                        <select id="filter-risk-band">
+                            <option value="all">All Bands</option>
+                            <option value="Very High">Very High</option>
+                            <option value="High">High</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Low">Low</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-wrapper" style="max-height:500px">
+                        <table id="table-full-forecast" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th data-sort="zone_id">Zone</th>
+                                    <th data-sort="zone_name">Name</th>
+                                    <th data-sort="predicted_next_day_violations">Predicted</th>
+                                    <th data-sort="predicted_risk_score">Score</th>
+                                    <th data-sort="predicted_risk_band">Band</th>
+                                    <th data-sort="recommended_action">Action</th>
+                                    <th data-sort="manpower_estimate">Officers</th>
+                                    <th data-sort="time_window_to_watch">Watch</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Page: Explainability -->
+        <section id="page-explainability" class="page">
+            <div class="page-header">
+                <div>
+                    <h1>Model Explainability</h1>
+                    <p class="page-description">Understanding what drives the model's predictions — feature importance and SHAP analysis</p>
+                </div>
+            </div>
+
+            <!-- Story Panel -->
+            <div class="story-panel">
+                <h3>🧠 Why Should You Trust This Model?</h3>
+                <p>The ensemble model's predictions are primarily driven by:</p>
+                <div class="story-points">
+                    <div class="story-point">
+                        <span class="story-icon">📈</span>
+                        <div>
+                            <strong>Recent Violation Momentum</strong>
+                            <p>7-day rolling sums and peak-hour sums capture how active a zone has been in the past week.</p>
+                        </div>
+                    </div>
+                    <div class="story-point">
+                        <span class="story-icon">📊</span>
+                        <div>
+                            <strong>Rolling 7-Day & 14-Day Trends</strong>
+                            <p>Multi-window moving averages smooth out daily noise and highlight persistent congestion patterns.</p>
+                        </div>
+                    </div>
+                    <div class="story-point">
+                        <span class="story-icon">🔥</span>
+                        <div>
+                            <strong>Hotspot Persistence</strong>
+                            <p>Lag counts at 14 days confirm zones that are chronically problematic, not just one-day spikes.</p>
+                        </div>
+                    </div>
+                    <div class="story-point">
+                        <span class="story-icon">🏗️</span>
+                        <div>
+                            <strong>Zone Structure & Diversity</strong>
+                            <p>Number of unique locations and junctions within a zone indicate its structural complexity and multi-source violations.</p>
+                        </div>
+                    </div>
+                    <div class="story-point">
+                        <span class="story-icon">⏱️</span>
+                        <div>
+                            <strong>Lagged Counts</strong>
+                            <p>Yesterday's and last week's violation counts serve as strong autoregressive signals for tomorrow's prediction.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="explain-grid">
+                <!-- Feature Importance Chart -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Feature Importance (Top 15 — Cross-Model Average)</h3>
+                    </div>
+                    <div class="card-body chart-container-tall">
+                        <canvas id="feature-importance-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- SHAP Plot -->
+                <div class="card interactive-shap-card">
+                    <div class="card-header">
+                        <h3>SHAP Summary Plot (LightGBM)</h3>
+                        <button class="btn-action-sm" id="btn-zoom-shap">🔍 Zoom & Inspect</button>
+                    </div>
+                    <div class="card-body shap-container" id="shap-container-interactive">
+                        <div class="shap-image-wrapper">
+                            <img id="shap-image" src="../dataset/shap_summary.png" alt="SHAP Summary Plot showing feature impact direction and magnitude on model predictions" class="shap-img">
+                            <div class="shap-hotspots-overlay">
+                                <div class="shap-hotspot" style="top: 15.5%; left: 45%;" data-feature="rolling_7_sum" data-explain="7-Day Rolling Sum: Larger values (red dots) strongly drive positive predictions (shift to the right). This shows recent violation momentum has the highest model weight."></div>
+                                <div class="shap-hotspot" style="top: 25.5%; left: 45%;" data-feature="lag_1" data-explain="Lag 1 (Yesterday's count): High values (red) push prediction to the right, showing strong autoregressive violation behavior."></div>
+                                <div class="shap-hotspot" style="top: 35.5%; left: 45%;" data-feature="lag_7" data-explain="Lag 7 (Same day last week): Strong seasonal indicator. High values shift predictions positive, capturing weekly recurring patterns."></div>
+                                <div class="shap-hotspot" style="top: 45.5%; left: 45%;" data-feature="dominant_time_bucket" data-explain="Dominant Time Bucket: Peak hours (morning_peak and evening_peak) contribute heavily to positive predicted risk scores."></div>
+                                <div class="shap-hotspot" style="top: 55.5%; left: 45%;" data-feature="peak_share" data-explain="Peak Share %: Percentage of violations occurring in peak hours. Higher share yields higher predicted next-day counts."></div>
+                            </div>
+                        </div>
+                        <div class="shap-explanation-panel" id="shap-explanation-panel">
+                            <p class="shap-info-text">✨ <strong>Interactive Feature Inspector:</strong> Hover over the flashing indicator nodes on the chart to read how individual features impact the model's decisions.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Per-model breakdown -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Per-Model Feature Importance Breakdown</h3>
+                </div>
+                <div class="card-body chart-container">
+                    <canvas id="feature-model-chart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Page: Error Analysis -->
+        <section id="page-errors" class="page">
+            <div class="page-header">
+                <div>
+                    <h1>Prediction Error Analysis</h1>
+                    <p class="page-description">Honest assessment of model accuracy — where it excels and where it struggles</p>
+                </div>
+            </div>
+
+            <div class="error-grid">
+                <!-- Scatter Plot -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Actual vs Predicted (Test Set)</h3>
+                    </div>
+                    <div class="card-body chart-container">
+                        <canvas id="scatter-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Error Distribution -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Absolute Error Distribution</h3>
+                    </div>
+                    <div class="card-body chart-container">
+                        <canvas id="error-dist-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zone Inspector (Interactive Details) -->
+            <div class="card scatter-inspector-card" id="scatter-inspector-card">
+                <div class="card-header">
+                    <h3>🔍 Interactive Zone Inspector</h3>
+                    <span class="info-badge">Click any point on the scatter plot above to inspect the zone</span>
+                </div>
+                <div class="card-body">
+                    <div id="inspector-placeholder" class="inspector-placeholder">
+                        <p>No zone selected. Click a data point on the "Actual vs Predicted" scatter plot above to view location metrics and error details.</p>
+                    </div>
+                    <div id="inspector-content" class="inspector-content hidden">
+                        <div class="inspector-grid">
+                            <div class="inspector-tile">
+                                <span class="tile-label">Zone Name</span>
+                                <span class="tile-val" id="inspect-name">—</span>
+                            </div>
+                            <div class="inspector-tile">
+                                <span class="tile-label">Zone ID</span>
+                                <span class="tile-val" id="inspect-id">—</span>
+                            </div>
+                            <div class="inspector-tile">
+                                <span class="tile-label">Actual Violations</span>
+                                <span class="tile-val highlight-green" id="inspect-actual">—</span>
+                            </div>
+                            <div class="inspector-tile">
+                                <span class="tile-label">Predicted Violations</span>
+                                <span class="tile-val highlight-blue" id="inspect-predicted">—</span>
+                            </div>
+                            <div class="inspector-tile">
+                                <span class="tile-label">Absolute Error</span>
+                                <span class="tile-val highlight-red" id="inspect-error">—</span>
+                            </div>
+                            <div class="inspector-tile">
+                                <span class="tile-label">Police Station</span>
+                                <span class="tile-val" id="inspect-station">—</span>
+                            </div>
+                            <div class="inspector-tile">
+                                <span class="tile-label">Manpower Recommendation</span>
+                                <span class="tile-val" id="inspect-manpower">—</span>
+                            </div>
+                            <div class="inspector-tile">
+                                <span class="tile-label">Watch Window</span>
+                                <span class="tile-val" id="inspect-window">—</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Best / Worst Tables -->
+            <div class="error-tables-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>✅ Best Predicted Zones (Lowest Error)</h3>
+                    </div>
+                    <div class="card-body">
+                        <table id="table-best-predictions" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Zone ID</th>
+                                    <th>Actual</th>
+                                    <th>Predicted</th>
+                                    <th>Abs Error</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>⚠️ Worst Predicted Zones (Highest Error)</h3>
+                    </div>
+                    <div class="card-body">
+                        <table id="table-worst-predictions" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Zone ID</th>
+                                    <th>Actual</th>
+                                    <th>Predicted</th>
+                                    <th>Abs Error</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Stats -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Error Statistics Summary</h3>
+                </div>
+                <div class="card-body" id="error-stats-body">
+                    <!-- Filled by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Page: Model Comparison -->
+        <section id="page-comparison" class="page">
+            <div class="page-header">
+                <div>
+                    <h1>Baseline vs Final Ensemble</h1>
+                    <p class="page-description">Proving the extra modeling work was worth it — benchmark comparison</p>
+                </div>
+            </div>
+
+            <!-- Comparison Charts -->
+            <div class="comparison-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Validation Set Performance</h3>
+                    </div>
+                    <div class="card-body chart-container">
+                        <canvas id="val-comparison-chart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Test Set Performance</h3>
+                    </div>
+                    <div class="card-body chart-container">
+                        <canvas id="test-comparison-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Comparison Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Full Model Benchmark</h3>
+                </div>
+                <div class="card-body">
+                    <table id="table-model-comparison" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Split</th>
+                                <th>Model</th>
+                                <th>MAE ↓</th>
+                                <th>RMSE ↓</th>
+                                <th>Daily P@10 ↑</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comparison-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Takeaway -->
+            <div class="takeaway-panel">
+                <h3>💡 Key Takeaway</h3>
+                <p>The final <strong>Weighted Average Ensemble</strong> of tuned LightGBM, XGBoost, and HistGradientBoosting achieves the highest <strong>Validation Daily Precision@10 of 68.7%</strong>, meaning nearly 7 out of 10 zones flagged for deployment each day are genuinely in the true top-10. This is a <strong>+12.7 percentage point improvement</strong> over the naive persistence baseline (56.0%), proving the extra ML engineering effort produced a meaningfully better policing tool.</p>
+            </div>
+        </section>
+
+        <!-- Page: Downloads -->
+        <section id="page-downloads" class="page">
+            <div class="page-header">
+                <div>
+                    <h1>Download & Export</h1>
+                    <p class="page-description">Download all output files for offline inspection and jury review</p>
+                </div>
+            </div>
+
+            <div class="downloads-grid" id="downloads-grid">
+                <!-- Filled by JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Interactive SHAP Lightbox Modal -->
+    <div id="shap-lightbox" class="lightbox-modal">
+        <span class="close-lightbox" id="close-shap-lightbox">&times;</span>
+        <div class="lightbox-content">
+            <h2 class="lightbox-title">SHAP Summary Plot (Detailed View)</h2>
+            <p class="lightbox-subtitle">Explains the global impact direction and magnitude of the top features in Bengaluru's traffic model</p>
+            <div class="lightbox-img-wrapper">
+                <img src="../dataset/shap_summary.png" class="lightbox-img">
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom JS -->
+    <script src="app.js"></script>
+</body>
+</html>
