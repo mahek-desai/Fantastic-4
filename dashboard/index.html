@@ -31,6 +31,18 @@
 </head>
 <body>
 
+    <!-- Sidebar Overlay (for mobile tap-to-close) -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+    <!-- Floating Sidebar Toggle Button -->
+    <button id="sidebar-toggle-btn" class="sidebar-toggle" aria-label="Toggle Sidebar" title="Toggle Sidebar">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+    </button>
+
     <!-- 3D Background Canvas -->
     <canvas id="bg-canvas-3d"></canvas>
 
@@ -52,6 +64,12 @@
                     <span class="logo-subtitle">Hotspot Dashboard</span>
                 </div>
             </div>
+            <button id="sidebar-collapse-btn" class="sidebar-collapse-btn" aria-label="Collapse Sidebar" title="Collapse Sidebar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="11 17 6 12 11 7"></polyline>
+                    <polyline points="18 17 13 12 18 7"></polyline>
+                </svg>
+            </button>
         </div>
 
         <div class="sidebar-menu">

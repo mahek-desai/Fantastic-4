@@ -160,6 +160,11 @@ function initNavigation() {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById(`page-${page}`).classList.add('active');
 
+            // Close mobile sidebar on link click
+            if (window.innerWidth <= 860) {
+                document.body.classList.remove('sidebar-open');
+            }
+
             // Lazy-init map
             if (page === 'map' && !mapInstance) {
                 setTimeout(initMap, 100);
@@ -167,6 +172,15 @@ function initNavigation() {
             if (page === 'map' && mapInstance) {
                 setTimeout(() => mapInstance.invalidateSize(), 150);
             }
+
+            // Force Chart.js to recalculate dimensions since sections are shown/hidden
+            setTimeout(() => {
+                if (typeof Chart !== 'undefined' && Chart.instances) {
+                    Object.values(Chart.instances).forEach(chart => {
+                        chart.resize();
+                    });
+                }
+            }, 100);
         });
     });
 
@@ -180,6 +194,37 @@ function initNavigation() {
             document.getElementById(tab.dataset.tab).classList.add('active');
         });
     });
+
+    // Sidebar toggle functionality
+    const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+    const sidebarCollapseBtn = document.getElementById('sidebar-collapse-btn');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    if (sidebarToggleBtn) {
+        sidebarToggleBtn.addEventListener('click', () => {
+            if (window.innerWidth <= 860) {
+                document.body.classList.add('sidebar-open');
+            } else {
+                document.body.classList.remove('sidebar-collapsed');
+            }
+        });
+    }
+
+    if (sidebarCollapseBtn) {
+        sidebarCollapseBtn.addEventListener('click', () => {
+            if (window.innerWidth <= 860) {
+                document.body.classList.remove('sidebar-open');
+            } else {
+                document.body.classList.add('sidebar-collapsed');
+            }
+        });
+    }
+
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', () => {
+            document.body.classList.remove('sidebar-open');
+        });
+    }
 }
 
 // ── Phase 5.2: Executive Summary ──
@@ -249,8 +294,8 @@ function renderExecutiveSummary() {
             labels: bands,
             datasets: [{
                 data: bandCounts,
-                backgroundColor: ['#ff4757', '#ff7f50', '#ffa502', '#2ed573'],
-                borderColor: 'rgba(26, 31, 53, 0.9)',
+                backgroundColor: ['#ff3860', '#ff7600', '#ffdd00', '#00e676'],
+                borderColor: 'rgba(13, 16, 21, 0.9)',
                 borderWidth: 2,
                 hoverOffset: 12
             }]
@@ -289,7 +334,7 @@ function renderExecutiveSummary() {
                     }
                 },
                 tooltip: {
-                    backgroundColor: '#161c36',
+                    backgroundColor: '#111413',
                     titleColor: '#f8fafc',
                     bodyColor: '#cbd5e1',
                     borderColor: 'rgba(255,255,255,0.08)',
@@ -305,17 +350,45 @@ function renderExecutiveSummary() {
     });
 }
 
-// ── Phase 5.3: Hotspot Map ──
 function initMap() {
-    mapInstance = L.map('hotspot-map', {
-        zoomControl: true,
-        attributionControl: true
-    }).setView([12.97, 77.59], 12);
+    // Define base layers
+    const googleRoadmap = L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        subdomains: '0123',
+        attribution: '© Google Maps',
+        maxZoom: 20
+    });
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    const cartoPositron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
         attribution: '© OpenStreetMap © CARTO',
         maxZoom: 19
-    }).addTo(mapInstance);
+    });
+
+    const cartoDark = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '© OpenStreetMap © CARTO',
+        maxZoom: 19
+    });
+
+    const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    });
+
+    // Initialize map with Google Maps as default
+    mapInstance = L.map('hotspot-map', {
+        zoomControl: true,
+        attributionControl: true,
+        layers: [googleRoadmap]
+    }).setView([12.97, 77.59], 12);
+
+    // Add base layers selector
+    const baseMaps = {
+        "Google Maps (Default)": googleRoadmap,
+        "CartoDB Positron (Light)": cartoPositron,
+        "CartoDB Dark Matter (Dark)": cartoDark,
+        "OpenStreetMap (OSM)": osm
+    };
+
+    L.control.layers(baseMaps, null, { position: 'topright' }).addTo(mapInstance);
 
     renderMapMarkers();
 
@@ -374,10 +447,10 @@ function renderMapMarkers() {
         const marker = L.circleMarker([lat, lon], {
             radius: radius,
             fillColor: color,
-            color: color,
-            fillOpacity: 0.55,
-            weight: 1.5,
-            opacity: 0.8
+            color: '#111827',
+            fillOpacity: 0.7,
+            weight: 1.8,
+            opacity: 0.95
         });
 
         const popupContent = `
@@ -542,12 +615,12 @@ function renderExplainability() {
                 label: 'Average Importance',
                 data: top15.map(r => r.average),
                 backgroundColor: top15.map((_, i) => {
-                    const hue = 250 - (i * 8);
-                    return `hsla(${hue}, 85%, 65%, 0.75)`;
+                    const hue = 145 - (i * 7);
+                    return `hsla(${hue}, 90%, 55%, 0.75)`;
                 }),
                 borderColor: top15.map((_, i) => {
-                    const hue = 250 - (i * 8);
-                    return `hsla(${hue}, 85%, 65%, 1)`;
+                    const hue = 145 - (i * 7);
+                    return `hsla(${hue}, 90%, 55%, 1)`;
                 }),
                 borderWidth: 1,
                 borderRadius: 5
@@ -560,7 +633,7 @@ function renderExplainability() {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#161c36',
+                    backgroundColor: '#111413',
                     titleColor: '#f8fafc',
                     bodyColor: '#cbd5e1',
                     borderColor: 'rgba(255,255,255,0.08)',
@@ -622,17 +695,17 @@ function renderExplainability() {
             const feat = h.dataset.feature;
             const explain = h.dataset.explain;
             if (explainPanel) {
-                explainPanel.innerHTML = `<p class="shap-info-text" style="color:#a5b4fc">🔍 <strong>Feature [${feat}]:</strong> ${explain}</p>`;
-                explainPanel.style.background = 'rgba(99, 102, 241, 0.16)';
-                explainPanel.style.borderColor = 'rgba(99, 102, 241, 0.4)';
+                explainPanel.innerHTML = `<p class="shap-info-text" style="color:#ffe699">🔍 <strong>Feature [${feat}]:</strong> ${explain}</p>`;
+                explainPanel.style.background = 'rgba(0, 255, 135, 0.12)';
+                explainPanel.style.borderColor = 'rgba(0, 255, 135, 0.3)';
             }
         });
 
         h.addEventListener('mouseleave', () => {
             if (explainPanel) {
                 explainPanel.innerHTML = defaultSHAPText;
-                explainPanel.style.background = 'rgba(99, 102, 241, 0.08)';
-                explainPanel.style.borderColor = 'rgba(99, 102, 241, 0.2)';
+                explainPanel.style.background = 'rgba(0, 255, 135, 0.05)';
+                explainPanel.style.borderColor = 'rgba(0, 255, 135, 0.15)';
             }
         });
     });
@@ -647,24 +720,24 @@ function renderExplainability() {
                 {
                     label: 'LightGBM',
                     data: top10.map(r => r.lightgbm),
-                    backgroundColor: 'rgba(99, 102, 241, 0.6)',
-                    borderColor: 'rgba(99, 102, 241, 1)',
+                    backgroundColor: 'rgba(0, 255, 135, 0.6)',
+                    borderColor: 'rgba(0, 255, 135, 1)',
                     borderWidth: 1,
                     borderRadius: 3
                 },
                 {
                     label: 'XGBoost',
                     data: top10.map(r => r.xgboost),
-                    backgroundColor: 'rgba(6, 182, 212, 0.6)',
-                    borderColor: 'rgba(6, 182, 212, 1)',
+                    backgroundColor: 'rgba(255, 170, 0, 0.6)',
+                    borderColor: 'rgba(255, 170, 0, 1)',
                     borderWidth: 1,
                     borderRadius: 3
                 },
                 {
                     label: 'Random Forest',
                     data: top10.map(r => r.random_forest),
-                    backgroundColor: 'rgba(16, 185, 129, 0.6)',
-                    borderColor: 'rgba(16, 185, 129, 1)',
+                    backgroundColor: 'rgba(52, 211, 153, 0.6)',
+                    borderColor: 'rgba(52, 211, 153, 1)',
                     borderWidth: 1,
                     borderRadius: 3
                 }
@@ -757,8 +830,8 @@ function renderErrorAnalysis() {
                 {
                     label: 'Zones',
                     data: scatterData,
-                    backgroundColor: 'rgba(99, 102, 241, 0.6)',
-                    borderColor: 'rgba(99, 102, 241, 0.9)',
+                    backgroundColor: 'rgba(0, 255, 135, 0.6)',
+                    borderColor: 'rgba(0, 255, 135, 0.9)',
                     borderWidth: 1,
                     pointRadius: 4.5,
                     pointHoverRadius: 8
@@ -812,7 +885,7 @@ function renderErrorAnalysis() {
                     }
                 },
                 tooltip: {
-                    backgroundColor: '#161c36',
+                    backgroundColor: '#111413',
                     titleColor: '#f8fafc',
                     bodyColor: '#cbd5e1',
                     borderColor: 'rgba(255,255,255,0.08)',
@@ -860,11 +933,11 @@ function renderErrorAnalysis() {
                 data: binCounts,
                 backgroundColor: binLabels.map((_, i) => {
                     const t = i / binLabels.length;
-                    return `hsla(${200 - t * 150}, 85%, 60%, 0.7)`;
+                    return `hsla(${145 - t * 145}, 90%, 55%, 0.7)`;
                 }),
                 borderColor: binLabels.map((_, i) => {
                     const t = i / binLabels.length;
-                    return `hsla(${200 - t * 150}, 85%, 60%, 1)`;
+                    return `hsla(${145 - t * 145}, 90%, 55%, 1)`;
                 }),
                 borderWidth: 1,
                 borderRadius: 4
@@ -888,7 +961,7 @@ function renderErrorAnalysis() {
                     const bestBody = document.querySelector('#table-best-predictions tbody');
                     if (filteredBest.length > 0) {
                         bestBody.innerHTML = filteredBest.map(r => `
-                            <tr style="background: rgba(6,182,212,0.06)">
+                            <tr style="background: rgba(0,255,135,0.06)">
                                 <td class="num">${r.zone_id}</td>
                                 <td class="num">${fmt(r.actual, 2)}</td>
                                 <td class="num">${fmt(r.predicted, 2)}</td>
@@ -919,7 +992,7 @@ function renderErrorAnalysis() {
 
                     let rangeLabel = hi === Infinity ? `>${lo}` : `${lo}–${hi}`;
                     document.getElementById('error-stats-body').insertAdjacentHTML('afterbegin', `
-                        <div class="filter-alert-panel" id="table-filter-alert" style="background:rgba(6, 182, 212, 0.12); border:1px solid rgba(6, 182, 212, 0.3); padding:12px 18px; border-radius: var(--radius-sm); margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; width:100%; grid-column: 1 / -1; font-size:13px; color:#cbd5e1;">
+                        <div class="filter-alert-panel" id="table-filter-alert" style="background:rgba(0, 255, 135, 0.08); border:1px solid rgba(0, 255, 135, 0.25); padding:12px 18px; border-radius: var(--radius-sm); margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; width:100%; grid-column: 1 / -1; font-size:13px; color:#cbd5e1;">
                             <span>Active Filter: Absolute Error between <strong>${rangeLabel}</strong></span>
                             <button class="btn-action-sm" style="padding:4px 8px;" onclick="resetErrorTables()">Reset Tables</button>
                         </div>
@@ -929,7 +1002,7 @@ function renderErrorAnalysis() {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#161c36',
+                    backgroundColor: '#111413',
                     titleColor: '#f8fafc',
                     bodyColor: '#cbd5e1',
                     borderColor: 'rgba(255,255,255,0.08)',
@@ -1019,10 +1092,10 @@ function renderComparison() {
     const chartColors = [
         'rgba(100, 116, 139, 0.7)',
         'rgba(100, 116, 139, 0.7)',
-        'rgba(6, 182, 212, 0.7)',
-        'rgba(139, 92, 246, 0.7)',
-        'rgba(99, 102, 241, 0.7)',
-        'rgba(16, 185, 129, 0.8)',
+        'rgba(255, 170, 0, 0.7)',
+        'rgba(52, 211, 153, 0.7)',
+        'rgba(0, 230, 118, 0.7)',
+        'rgba(0, 255, 135, 0.8)',
     ];
 
     // Validation chart: P@10
@@ -1045,7 +1118,7 @@ function renderComparison() {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#1a1f35',
+                    backgroundColor: '#111413',
                     titleColor: '#f1f5f9',
                     bodyColor: '#94a3b8',
                     borderColor: 'rgba(148,163,184,0.15)',
@@ -1090,7 +1163,7 @@ function renderComparison() {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#1a1f35',
+                    backgroundColor: '#111413',
                     titleColor: '#f1f5f9',
                     bodyColor: '#94a3b8',
                     borderColor: 'rgba(148,163,184,0.15)',
@@ -1261,9 +1334,9 @@ function init3DBackground() {
     const colors = new Float32Array(particleCount * 3);
     const originalY = new Float32Array(particleCount);
 
-    const color1 = new THREE.Color('#6366f1'); // Indigo
-    const color2 = new THREE.Color('#06b6d4'); // Cyan
-    const color3 = new THREE.Color('#8b5cf6'); // Purple
+    const color1 = new THREE.Color('#00ff87'); // Neon Emerald
+    const color2 = new THREE.Color('#ffaa00'); // Neon Gold/Amber
+    const color3 = new THREE.Color('#ff3860'); // Neon Crimson/Red
 
     for (let i = 0; i < particleCount; i++) {
         const x = (Math.random() - 0.5) * 1400;
