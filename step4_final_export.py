@@ -12,21 +12,25 @@ Reads: dataset/zone_daily_features.csv, dataset/tuning_results.csv,
 """
 
 import ast
+import os
 import time
 import warnings
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=UserWarning, module="lightgbm")
 
-# ── Paths ────────────────────────────────────────────────────────────────────
-DAILY_FEATURES_PATH   = r"c:\Users\shrey\OneDrive\Desktop\Flipkart hackathon\dataset\zone_daily_features.csv"
-TUNING_PATH           = r"c:\Users\shrey\OneDrive\Desktop\Flipkart hackathon\dataset\tuning_results.csv"
-ENSEMBLE_PATH         = r"c:\Users\shrey\OneDrive\Desktop\Flipkart hackathon\dataset\ensemble_results.csv"
-ZONES_PATH            = r"c:\Users\shrey\OneDrive\Desktop\Flipkart hackathon\dataset\hotspot_zones.csv"
-PREDICTIONS_PATH      = r"c:\Users\shrey\OneDrive\Desktop\Flipkart hackathon\dataset\step4_predictions.csv"
-RECOMMENDATIONS_PATH  = r"c:\Users\shrey\OneDrive\Desktop\Flipkart hackathon\dataset\deployment_recommendations.csv"
+# ── Paths — resolved relative to this script's location ──────────────────────
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATASET_DIR = os.path.join(BASE_DIR, "dataset")
+DAILY_FEATURES_PATH   = os.path.join(DATASET_DIR, "zone_daily_features.csv")
+TUNING_PATH           = os.path.join(DATASET_DIR, "tuning_results.csv")
+ENSEMBLE_PATH         = os.path.join(DATASET_DIR, "ensemble_results.csv")
+ZONES_PATH            = os.path.join(DATASET_DIR, "hotspot_zones.csv")
+PREDICTIONS_PATH      = os.path.join(DATASET_DIR, "step4_predictions.csv")
+RECOMMENDATIONS_PATH  = os.path.join(DATASET_DIR, "deployment_recommendations.csv")
 OLD_RECOMMENDATIONS   = None  # We'll load the existing file before overwriting
 
 FEATURE_COLS = [
@@ -269,7 +273,7 @@ def main():
     feat_imp_df['Average'] = feat_imp_df[list(importances.keys())].mean(axis=1)
     feat_imp_df = feat_imp_df.sort_values('Average', ascending=False).reset_index(drop=True)
     
-    FEAT_IMP_PATH = r"c:\Users\shrey\OneDrive\Desktop\Flipkart hackathon\dataset\feature_importance.csv"
+    FEAT_IMP_PATH = os.path.join(DATASET_DIR, "feature_importance.csv")
     feat_imp_df.to_csv(FEAT_IMP_PATH, index=False)
     print(f"  Saved Feature Importances to: {FEAT_IMP_PATH}")
     print("\nTop 5 Most Important Features (Across Models):")
@@ -297,7 +301,7 @@ def main():
             plt.title(f"SHAP Summary Plot ({explain_model_name})", fontsize=14)
             plt.tight_layout()
             
-            SHAP_PLOT_PATH = r"c:\Users\shrey\OneDrive\Desktop\Flipkart hackathon\dataset\shap_summary.png"
+            SHAP_PLOT_PATH = os.path.join(DATASET_DIR, "shap_summary.png")
             plt.savefig(SHAP_PLOT_PATH, dpi=150)
             plt.close()
             print(f"  Saved SHAP Summary Plot to: {SHAP_PLOT_PATH}")
@@ -321,7 +325,7 @@ def main():
     error_analysis['absolute_error'] = np.abs(error_analysis['error'])
     
     # Save error analysis CSV
-    ERROR_ANALYSIS_PATH = r"c:\Users\shrey\OneDrive\Desktop\Flipkart hackathon\dataset\prediction_error_analysis.csv"
+    ERROR_ANALYSIS_PATH = os.path.join(DATASET_DIR, "prediction_error_analysis.csv")
     error_analysis[['zone_id', 'actual', 'predicted', 'error', 'absolute_error']].to_csv(ERROR_ANALYSIS_PATH, index=False)
     print(f"  Saved Error Analysis to: {ERROR_ANALYSIS_PATH}")
     

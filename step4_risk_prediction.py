@@ -7,12 +7,14 @@ from sklearn.cluster import DBSCAN
 from sklearn.ensemble import RandomForestRegressor, HistGradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
-# Paths
-INPUT_PATH = r"c:\Users\shrey\OneDrive\Desktop\Flipkart hackathon\dataset\ps1_enhanced_step1_step2.csv"
-ZONES_PATH = r"c:\Users\shrey\OneDrive\Desktop\Flipkart hackathon\dataset\hotspot_zones.csv"
-DAILY_FEATURES_PATH = r"c:\Users\shrey\OneDrive\Desktop\Flipkart hackathon\dataset\zone_daily_features.csv"
-PREDICTIONS_PATH = r"c:\Users\shrey\OneDrive\Desktop\Flipkart hackathon\dataset\step4_predictions.csv"
-RECOMMENDATIONS_PATH = r"c:\Users\shrey\OneDrive\Desktop\Flipkart hackathon\dataset\deployment_recommendations.csv"
+# Paths — resolved relative to this script's location
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATASET_DIR = os.path.join(BASE_DIR, "dataset")
+INPUT_PATH = os.path.join(DATASET_DIR, "ps1_enhanced_step1_step2.csv")
+ZONES_PATH = os.path.join(DATASET_DIR, "hotspot_zones.csv")
+DAILY_FEATURES_PATH = os.path.join(DATASET_DIR, "zone_daily_features.csv")
+PREDICTIONS_PATH = os.path.join(DATASET_DIR, "step4_predictions.csv")
+RECOMMENDATIONS_PATH = os.path.join(DATASET_DIR, "deployment_recommendations.csv")
 
 def main():
     t_start = time.time()

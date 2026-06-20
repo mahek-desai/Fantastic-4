@@ -8,6 +8,7 @@ Reads: dataset/zone_daily_features.csv, dataset/model_leaderboard.csv
 Output: dataset/tuning_results.csv
 """
 
+import os
 import time
 import warnings
 import numpy as np
@@ -16,13 +17,16 @@ import optuna
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 from sklearn.model_selection import TimeSeriesSplit
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=UserWarning, module="lightgbm")
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
-# ── Paths ────────────────────────────────────────────────────────────────────
-DAILY_FEATURES_PATH = r"c:\Users\shrey\OneDrive\Desktop\Flipkart hackathon\dataset\zone_daily_features.csv"
-LEADERBOARD_PATH    = r"c:\Users\shrey\OneDrive\Desktop\Flipkart hackathon\dataset\model_leaderboard.csv"
-TUNING_PATH         = r"c:\Users\shrey\OneDrive\Desktop\Flipkart hackathon\dataset\tuning_results.csv"
+# ── Paths — resolved relative to this script's location ──────────────────────
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATASET_DIR = os.path.join(BASE_DIR, "dataset")
+DAILY_FEATURES_PATH = os.path.join(DATASET_DIR, "zone_daily_features.csv")
+LEADERBOARD_PATH    = os.path.join(DATASET_DIR, "model_leaderboard.csv")
+TUNING_PATH         = os.path.join(DATASET_DIR, "tuning_results.csv")
 
 FEATURE_COLS = [
     'centroid_lat', 'centroid_lon', 'lat_std', 'lon_std', 'violation_density',

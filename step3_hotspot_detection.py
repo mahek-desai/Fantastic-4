@@ -5,9 +5,11 @@ import numpy as np
 import pandas as pd
 from sklearn.cluster import DBSCAN
 
-# Paths
-INPUT_PATH = r"c:\Users\shrey\OneDrive\Desktop\Flipkart hackathon\dataset\ps1_enhanced_step1_step2.csv"
-OUTPUT_DIR = r"c:\Users\shrey\OneDrive\Desktop\Flipkart hackathon\dataset"
+# Paths — resolved relative to this script's location
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATASET_DIR = os.path.join(BASE_DIR, "dataset")
+INPUT_PATH = os.path.join(DATASET_DIR, "ps1_enhanced_step1_step2.csv")
+OUTPUT_DIR = DATASET_DIR
 ZONES_PATH = os.path.join(OUTPUT_DIR, "hotspot_zones.csv")
 RANKING_PATH = os.path.join(OUTPUT_DIR, "location_ranking.csv")
 MAP_DATA_PATH = os.path.join(OUTPUT_DIR, "hotspot_map_data.csv")

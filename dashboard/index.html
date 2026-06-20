@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BTP Hotspot Intelligence Dashboard — Bengaluru Traffic Police</title>
     <meta name="description" content="AI-powered traffic violation hotspot detection, risk prediction, and police deployment recommendation system for Bengaluru Traffic Police (BTP).">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300ff87' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polygon points='12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2'/><line x1='12' y1='22' x2='12' y2='15.5'/><polyline points='22 8.5 12 15.5 2 8.5'/></svg>">
+    <meta property="og:title" content="BTP Hotspot Intelligence Dashboard">
+    <meta property="og:description" content="AI-powered traffic violation hotspot detection, risk prediction, and police deployment recommendation system for Bengaluru Traffic Police (BTP).">
+    <meta property="og:type" content="website">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,7 +31,7 @@
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=1.3">
 </head>
 <body>
 
@@ -101,20 +105,14 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
                 <span>Model Comparison</span>
             </button>
+            <button class="nav-btn" data-page="team" id="nav-team">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                <span>Meet the Team</span>
+            </button>
             <button class="nav-btn" data-page="downloads" id="nav-downloads">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                 <span>Downloads</span>
             </button>
-        </div>
-
-        <div class="sidebar-footer">
-            <div class="team-badge">
-                <span class="team-icon">🏆</span>
-                <div>
-                    <span class="team-name">Fantastic 4</span>
-                    <span class="team-event">Hackathon 2024</span>
-                </div>
-            </div>
         </div>
     </nav>
 
@@ -183,6 +181,86 @@
                 </div>
                 <div class="card-body chart-container">
                     <canvas id="severity-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Congestion Impact (P1) -->
+            <div class="card exec-congestion-card">
+                <div class="card-header">
+                    <h3>🚦 Congestion & Road Capacity Impact Quantification</h3>
+                </div>
+                <div class="card-body">
+                    <p class="section-subtitle-description">Quantifies the impact of illegal parking on Bengaluru's carriageway capacity and overall congestion flow.</p>
+                    <div class="congestion-kpi-grid">
+                        <div class="kpi-mini-card">
+                            <div class="kpi-mini-value" id="congestion-kpi-score">—</div>
+                            <div class="kpi-mini-label">City-Wide Impact Score</div>
+                        </div>
+                        <div class="kpi-mini-card">
+                            <div class="kpi-mini-value" id="congestion-kpi-reduction">—</div>
+                            <div class="kpi-mini-label">Carriageway Capacity Loss (Peak)</div>
+                        </div>
+                        <div class="kpi-mini-card">
+                            <div class="kpi-mini-value" id="congestion-kpi-chokepoints">—</div>
+                            <div class="kpi-mini-label">Active Chokepoint Hotspots</div>
+                        </div>
+                    </div>
+                    <div class="congestion-flex-container">
+                        <div class="congestion-chart-side">
+                            <h4>Top 10 Congestion Impact Zones</h4>
+                            <div class="chart-container-medium">
+                                <canvas id="congestion-chart"></canvas>
+                            </div>
+                        </div>
+                        <div class="congestion-table-side">
+                            <h4>Peak Congestion Chokepoints</h4>
+                            <div class="table-wrapper-small">
+                                <table id="table-congestion-impact" class="data-table small-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Zone</th>
+                                            <th>CIS Score</th>
+                                            <th>Road Loss %</th>
+                                            <th>Peak Time</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="explainability-panel">
+                        <button class="btn-explain-toggle" onclick="toggleExplainer('congestion-explainer')">
+                            <span>💡 How are these metrics calculated?</span>
+                            <span class="arrow-icon">▼</span>
+                        </button>
+                        <div id="congestion-explainer" class="explainer-content hidden">
+                            <div class="explainer-grid-inner">
+                                <div class="explainer-col">
+                                    <h5>Congestion Impact Score (CIS) Formula</h5>
+                                    <p>The CIS is a weighted composite score (0-100) calculated per hotspot zone:</p>
+                                    <ul>
+                                        <li><strong>30% - Violation Density:</strong> Spatially normalized frequency of violations.</li>
+                                        <li><strong>25% - Peak-Hour Concentration:</strong> Share of violations during rush hours.</li>
+                                        <li><strong>20% - Junction Proximity:</strong> Penalizes hotspots chokepointing major intersections.</li>
+                                        <li><strong>15% - Road Type Weight:</strong> Ring/Main roads get 100%, Flyovers 80%, side streets 40%.</li>
+                                        <li><strong>10% - Vehicle Mix:</strong> Higher penalty for heavy bus/commercial transport presence.</li>
+                                    </ul>
+                                </div>
+                                <div class="explainer-col">
+                                    <h5>Carriageway Capacity Loss Estimation</h5>
+                                    <p>Estimates physical lane blockage from illegal parking:</p>
+                                    <ul>
+                                        <li>Each parked vehicle blocks ~3.2m of lane width.</li>
+                                        <li>On a <strong>2-lane road</strong> (e.g. Cottonpet), a single parked vehicle causes a <strong>~33%</strong> capacity reduction.</li>
+                                        <li>On a <strong>4-lane road</strong> (e.g. ORR), blockage is <strong>~17%</strong>.</li>
+                                        <li>A <strong>1.5× congestion multiplier</strong> is applied to peak hour volumes to account for compound delay & spillover.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -323,6 +401,34 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Temporal Heatmap (P1) -->
+            <div class="card temporal-heatmap-card">
+                <div class="card-header">
+                    <h3>📅 Temporal Violation Hotspot Grid</h3>
+                </div>
+                <div class="card-body">
+                    <p class="section-subtitle-description">Aggregated violation heatmap showing hour-of-day vs day-of-week traffic risk density. Hover over cells to see violation counts.</p>
+                    
+                    <div class="info-block-inline">
+                        <span class="info-icon">ℹ️</span>
+                        <p><strong>Operational Utility:</strong> This matrix maps hour-by-hour hotspots across all 298K+ incidents. Darker, red cells highlight severe systemic bottlenecks (e.g. morning chokepoints around 9:00 AM-11:00 AM on weekdays, and heavy Sunday shopping congestion). Command centers use this to plan shift rotations.</p>
+                    </div>
+
+                    <div class="heatmap-container-wrapper">
+                        <div class="heatmap-legend-container">
+                            <span class="legend-text">Less Risk</span>
+                            <div class="heatmap-gradient-bar"></div>
+                            <span class="legend-text">More Risk</span>
+                        </div>
+                        <div class="heatmap-scroll-container">
+                            <div id="heatmap-grid" class="heatmap-grid">
+                                <!-- Generated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- Page: Forecast & Recommendations -->
@@ -356,6 +462,107 @@
                     <div class="rule-card rule-low">
                         <span class="rule-badge">Low</span>
                         <p>No dedicated deployment necessary</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resource Allocation Optimizer & Simulation (P1/P2) -->
+            <div class="card resource-optimizer-card">
+                <div class="card-header">
+                    <h3>🚔 Dynamic Officer Allocation & Simulation Engine</h3>
+                </div>
+                <div class="card-body">
+                    <p class="section-subtitle-description">Simulate field deployments. Adjust resource levels to optimize enforcement coverage against predicted risks.</p>
+                    
+                    <div class="optimizer-controls-grid">
+                        <div class="control-card">
+                            <label for="range-officers">👮 Total Available Officers: <span id="val-range-officers">60</span></label>
+                            <input type="range" id="range-officers" min="10" max="150" value="60" step="5">
+                        </div>
+                        <div class="control-card">
+                            <label for="range-tow">🚛 Total Available Tow Vehicles: <span id="val-range-tow">6</span></label>
+                            <input type="range" id="range-tow" min="1" max="15" value="6" step="1">
+                        </div>
+                    </div>
+
+                    <div class="optimizer-stats-grid">
+                        <div class="opt-stat-card">
+                            <div class="opt-stat-val" id="opt-coverage-pct">0.0%</div>
+                            <div class="opt-stat-label">AI-Guided Coverage</div>
+                        </div>
+                        <div class="opt-stat-card">
+                            <div class="opt-stat-val" id="opt-baseline-pct">0.0%</div>
+                            <div class="opt-stat-label">Random Patrol Coverage</div>
+                        </div>
+                        <div class="opt-stat-card glow-accent">
+                            <div class="opt-stat-val" id="opt-multiplier">0.0x</div>
+                            <div class="opt-stat-label">Enforcement Multiplier</div>
+                        </div>
+                        <div class="opt-stat-card">
+                            <div class="opt-stat-val" id="opt-deployed-stats">0/0</div>
+                            <div class="opt-stat-label">Officers / Tow Deployed</div>
+                        </div>
+                    </div>
+
+                    <div class="optimizer-split">
+                        <div class="optimizer-chart-side">
+                            <h4>Simulation: Enforcement Coverage Comparison</h4>
+                            <div class="chart-container-medium">
+                                <canvas id="allocation-simulation-chart"></canvas>
+                            </div>
+                        </div>
+                        <div class="optimizer-table-side">
+                            <h4>Top Simulated Zone Allocations</h4>
+                            <div class="table-wrapper-small">
+                                <table id="table-optimizer-allocations" class="data-table small-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Zone</th>
+                                            <th>Risk</th>
+                                            <th>Officers</th>
+                                            <th>Towers</th>
+                                            <th>Coverage %</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="explainability-panel">
+                        <button class="btn-explain-toggle" onclick="toggleExplainer('optimizer-explainer')">
+                            <span>💡 How does the Simulation & Optimization work?</span>
+                            <span class="arrow-icon">▼</span>
+                        </button>
+                        <div id="optimizer-explainer" class="explainer-content hidden">
+                            <div class="explainer-grid-inner">
+                                <div class="explainer-col">
+                                    <h5>Greedy Resource Dispatch Algorithm</h5>
+                                    <p>Allocates scarce BTP officers & towing units to maximize city-wide violation prevention:</p>
+                                    <ul>
+                                        <li><strong>1. Sort:</strong> Prioritizes all 539 zones by predicted next-day risk score.</li>
+                                        <li><strong>2. Match:</strong> Deploys resources based on risk band thresholds:
+                                            <ul>
+                                                <li><em>Very High:</em> 3 Officers + 1 Tow Vehicle (Barricade Support)</li>
+                                                <li><em>High:</em> 2 Officers (Active Patrols)</li>
+                                                <li><em>Medium:</em> 1 Officer (Mobile Monitoring)</li>
+                                            </ul>
+                                        </li>
+                                        <li><strong>3. Constraint:</strong> Halts allocations once available officer/tow counts reach zero.</li>
+                                    </ul>
+                                </div>
+                                <div class="explainer-col">
+                                    <h5>Comparative Simulation Baselines</h5>
+                                    <p>We benchmark our AI-Guided plan against two traditional strategies:</p>
+                                    <ul>
+                                        <li><strong>AI-Guided Plan:</strong> Achieves targeted coverage by placing personnel in predicted hotspots for the specific tomorrow watch windows.</li>
+                                        <li><strong>Historical Plan:</strong> Deploys static resources based on historical monthly averages, failing to capture daily spikes and shifting temporal peaks.</li>
+                                        <li><strong>Random Patrol:</strong> Distributes officers uniformly, representing a base reactive monitoring benchmark.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -662,6 +869,67 @@
                 </div>
             </div>
 
+            <!-- ML Pipeline Architecture Diagram (P1) -->
+            <div class="card pipeline-card">
+                <div class="card-header">
+                    <h3>⛓️ End-to-End AI Model Pipeline Architecture</h3>
+                </div>
+                <div class="card-body">
+                    <p class="section-subtitle-description">Click on any pipeline node to inspect its specific features, models, operations, and dataset transformations.</p>
+                    
+                    <div class="pipeline-container">
+                        <div class="pipeline-flow">
+                            <div class="pipeline-node active-glow" data-node="data" id="node-data">
+                                <div class="node-icon">💾</div>
+                                <div class="node-title">1. Raw Telemetry</div>
+                                <div class="node-subtitle">298K+ Violations</div>
+                            </div>
+                            <div class="pipeline-arrow">➔</div>
+                            <div class="pipeline-node active-glow" data-node="dbscan" id="node-dbscan">
+                                <div class="node-icon">📍</div>
+                                <div class="node-title">2. DBSCAN Cluster</div>
+                                <div class="node-subtitle">539 Spatial Zones</div>
+                            </div>
+                            <div class="pipeline-arrow">➔</div>
+                            <div class="pipeline-node active-glow" data-node="features" id="node-features">
+                                <div class="node-icon">🏗️</div>
+                                <div class="node-title">3. Feature Eng</div>
+                                <div class="node-subtitle">50+ Lag & Trend Cols</div>
+                            </div>
+                            <div class="pipeline-arrow">➔</div>
+                            <div class="pipeline-node active-glow" data-node="benchmark" id="node-benchmark">
+                                <div class="node-icon">📊</div>
+                                <div class="node-title">4. Model Registry</div>
+                                <div class="node-subtitle">10 Model Families</div>
+                            </div>
+                            <div class="pipeline-arrow">➔</div>
+                            <div class="pipeline-node active-glow" data-node="tuning" id="node-tuning">
+                                <div class="node-icon">⚙️</div>
+                                <div class="node-title">5. Hyperparameter</div>
+                                <div class="node-subtitle">100+ Optuna Trials</div>
+                            </div>
+                            <div class="pipeline-arrow">➔</div>
+                            <div class="pipeline-node active-glow" data-node="ensemble" id="node-ensemble">
+                                <div class="node-icon">🤖</div>
+                                <div class="node-title">6. Weighted Ensemble</div>
+                                <div class="node-subtitle">LightGBM+XGB+Hist</div>
+                            </div>
+                            <div class="pipeline-arrow">➔</div>
+                            <div class="pipeline-node active-glow" data-node="recommend" id="node-recommend">
+                                <div class="node-icon">🚔</div>
+                                <div class="node-title">7. Action Deploy</div>
+                                <div class="node-subtitle">Watch Windows & Officers</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pipeline-details-panel" id="pipeline-details-panel">
+                        <h4 id="pipeline-detail-title">Pipeline Stage Details</h4>
+                        <div id="pipeline-detail-desc">Click a stage node above to see detailed technical operations, hyper-parameters, and data schemas.</div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Comparison Charts -->
             <div class="comparison-grid">
                 <div class="card">
@@ -707,6 +975,150 @@
             <div class="takeaway-panel">
                 <h3>💡 Key Takeaway</h3>
                 <p>The final <strong>Weighted Average Ensemble</strong> of tuned LightGBM, XGBoost, and HistGradientBoosting achieves the highest <strong>Validation Daily Precision@10 of 68.7%</strong>, meaning nearly 7 out of 10 zones flagged for deployment each day are genuinely in the true top-10. This is a <strong>+12.7 percentage point improvement</strong> over the naive persistence baseline (56.0%), proving the extra ML engineering effort produced a meaningfully better policing tool.</p>
+            </div>
+        </section>
+
+        <!-- Page: Meet the Team -->
+        <section id="page-team" class="page">
+            <div class="page-header">
+                <div>
+                    <h1>Meet the Team</h1>
+                    <p class="page-description">The creative minds behind the BTP Hotspot Intelligence System</p>
+                </div>
+            </div>
+
+            <div class="team-grid-2x2">
+                <!-- Leader Card: Anand Nakum -->
+                <div class="team-card-wrapper leader-wrapper">
+                    <div class="team-card">
+                        <!-- Front of Card: Photo -->
+                        <div class="team-card-front">
+                            <div class="team-image-container">
+                                <img src="images/anand_nakum.png" alt="Anand Nakum" class="team-photo">
+                                <div class="team-photo-overlay"></div>
+                            </div>
+                            <div class="team-front-info">
+                                <h3 class="member-name">Anand Nakum</h3>
+                                <span class="role-badge leader-badge">Team Leader</span>
+                            </div>
+                        </div>
+                        <!-- Back of Card: Info & Social Links -->
+                        <div class="team-card-back">
+                            <h3 class="member-name">Anand Nakum</h3>
+                            <span class="role-badge leader-badge">Team Leader</span>
+                            <p class="member-bio">Lead System Architect & Senior Machine Learning Engineer. Spearheaded the predictive risk models and integration.</p>
+                            <div class="team-social-links">
+                                <a href="https://github.com/anandnakum-11" target="_blank" class="social-btn github-btn">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+                                    GitHub
+                                </a>
+                                <a href="https://www.linkedin.com/in/anand-nakum/" target="_blank" class="social-btn linkedin-btn">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                                    LinkedIn
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Member 1: Shrey Panwala -->
+                <div class="team-card-wrapper member-wrapper">
+                    <div class="team-card">
+                        <!-- Front of Card: Photo -->
+                        <div class="team-card-front">
+                            <div class="team-image-container">
+                                <img src="images/shrey_panwala.png" alt="Shrey Panwala" class="team-photo">
+                                <div class="team-photo-overlay"></div>
+                            </div>
+                            <div class="team-front-info">
+                                <h3 class="member-name">Shrey Panwala</h3>
+                                <span class="role-badge member-badge">Core Developer</span>
+                            </div>
+                        </div>
+                        <!-- Back of Card: Info & Social Links -->
+                        <div class="team-card-back">
+                            <h3 class="member-name">Shrey Panwala</h3>
+                            <span class="role-badge member-badge">Core Developer</span>
+                            <p class="member-bio">Feature Engineering Expert & Data Pipeline Developer. Focused on spatial clustering and temporal data transformations.</p>
+                            <div class="team-social-links">
+                                <a href="https://github.com/Shrey-Panwala" target="_blank" class="social-btn github-btn">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+                                    GitHub
+                                </a>
+                                <a href="https://www.linkedin.com/in/shrey-panwala-95507a286/" target="_blank" class="social-btn linkedin-btn">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                                    LinkedIn
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Member 2: Gracy Christian -->
+                <div class="team-card-wrapper member-wrapper">
+                    <div class="team-card">
+                        <!-- Front of Card: Photo -->
+                        <div class="team-card-front">
+                            <div class="team-image-container">
+                                <img src="images/gracy_christian.png" alt="Gracy Christian" class="team-photo">
+                                <div class="team-photo-overlay"></div>
+                            </div>
+                            <div class="team-front-info">
+                                <h3 class="member-name">Gracy Christian</h3>
+                                <span class="role-badge member-badge">UI/UX Designer</span>
+                            </div>
+                        </div>
+                        <!-- Back of Card: Info & Social Links -->
+                        <div class="team-card-back">
+                            <h3 class="member-name">Gracy Christian</h3>
+                            <span class="role-badge member-badge">UI/UX Designer</span>
+                            <p class="member-bio">Frontend Engineer & Design Lead. Designed the dashboard's cyberpunk interface, color tokens, and responsive layout.</p>
+                            <div class="team-social-links">
+                                <a href="https://github.com/Gracy1475" target="_blank" class="social-btn github-btn">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+                                    GitHub
+                                </a>
+                                <a href="https://www.linkedin.com/in/gracy-christian" target="_blank" class="social-btn linkedin-btn">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                                    LinkedIn
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Member 3: Mahek Desai -->
+                <div class="team-card-wrapper member-wrapper">
+                    <div class="team-card">
+                        <!-- Front of Card: Photo -->
+                        <div class="team-card-front">
+                            <div class="team-image-container">
+                                <img src="images/mahek_desai.png" alt="Mahek Desai" class="team-photo">
+                                <div class="team-photo-overlay"></div>
+                            </div>
+                            <div class="team-front-info">
+                                <h3 class="member-name">Mahek Desai</h3>
+                                <span class="role-badge member-badge">Data Scientist</span>
+                            </div>
+                        </div>
+                        <!-- Back of Card: Info & Social Links -->
+                        <div class="team-card-back">
+                            <h3 class="member-name">Mahek Desai</h3>
+                            <span class="role-badge member-badge">Data Scientist</span>
+                            <p class="member-bio">ML Engineer & Data Analyst. Designed the weighted ensemble model, model benchmark pipelines, and Optuna tuning.</p>
+                            <div class="team-social-links">
+                                <a href="https://github.com/mahek-desai" target="_blank" class="social-btn github-btn">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+                                    GitHub
+                                </a>
+                                <a href="https://www.linkedin.com/in/mahek-desai-639857333/" target="_blank" class="social-btn linkedin-btn">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
+                                    LinkedIn
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 

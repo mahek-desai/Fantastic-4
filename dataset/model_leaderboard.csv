@@ -1,0 +1,7 @@
+model_name,variant,val_mae,val_rmse,val_p10,test_mae,test_rmse,test_p10,train_time_s,inference_time_s
+Ensemble (Final),raw,2.284,9.489,0.687,2.492,11.085,0.594,0.125,0.015
+Tuned LightGBM,raw,2.201,10.008,0.68,2.373,10.806,0.594,0.342,0.008
+Tuned HistGBT,raw,2.307,9.779,0.68,2.471,10.867,0.581,0.284,0.006
+Tuned XGBoost,raw,2.433,9.46,0.673,2.712,12.222,0.606,0.485,0.012
+7-Day Rolling Mean,raw,2.052,10.03,0.667,2.286,11.679,0.6,0.005,0.002
+Persistence Baseline,raw,2.432,13.113,0.56,2.676,14.113,0.519,0.001,0.001

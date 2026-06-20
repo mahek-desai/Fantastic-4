@@ -7,17 +7,21 @@ on the FROZEN zone-day dataset and chronological split from Step 4.
 Output: dataset/model_leaderboard.csv
 """
 
+import os
 import time
 import warnings
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
-warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=UserWarning, module="lightgbm")
 
-# ── Paths ────────────────────────────────────────────────────────────────────
-DAILY_FEATURES_PATH = r"c:\Users\shrey\OneDrive\Desktop\Flipkart hackathon\dataset\zone_daily_features.csv"
-LEADERBOARD_PATH    = r"c:\Users\shrey\OneDrive\Desktop\Flipkart hackathon\dataset\model_leaderboard.csv"
+# ── Paths — resolved relative to this script's location ──────────────────────
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATASET_DIR = os.path.join(BASE_DIR, "dataset")
+DAILY_FEATURES_PATH = os.path.join(DATASET_DIR, "zone_daily_features.csv")
+LEADERBOARD_PATH    = os.path.join(DATASET_DIR, "model_leaderboard.csv")
 
 # ── Frozen feature list (identical to step4_risk_prediction.py) ──────────────
 FEATURE_COLS = [
