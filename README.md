@@ -232,17 +232,6 @@ Fantastic-4/
 
 ---
 
-## 🔄 Recent Updates
-
-### v2.0 — Dashboard Enhancement Release
-- ✅ **Dynamic Explain Buttons** added to every chart and map — opens a data-driven narrative modal using actual loaded CSV data
-- ✅ **Heatmap Tooltip Fix** — Monday (row 1) tooltips now render below the cell to prevent overflow clipping
-- ✅ **Map Popup Readability** — All 4 tile themes now show popups with solid dark background (#0d1117) and light text for full readability across Google, CartoDB Positron, CartoDB Dark, and OSM layers
-- ✅ **CSS Overhaul** — Leaflet popup styling hardened with `!important` overrides for theme-agnostic rendering
-- ✅ **Explain Modal System** — Glassmorphism dark overlay modal with animated entry, Esc-to-close, and click-outside-to-close
-
----
-
 ## 📜 License
 
 This project was built for the **Flipkart Gridlock Hackathon 2.0 (Round 2)**.
