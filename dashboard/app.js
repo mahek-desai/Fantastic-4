@@ -67,7 +67,7 @@ function normalizeColumns(rows) {
 }
 
 async function loadCSVWithFallback(filename, fallbackData) {
-    const base = '../dataset/';
+    const base = './dataset/';
     try {
         return await loadCSV(base + filename);
     } catch (err) {
