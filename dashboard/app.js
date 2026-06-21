@@ -1609,7 +1609,7 @@ function renderTemporalHeatmap() {
         return h > 12 ? `${h - 12}:00 PM - ${h - 11}:00 PM` : `${h}:00 AM - ${h + 1}:00 AM`;
     };
 
-    days.forEach(day => {
+    days.forEach((day, dayIndex) => {
         html += `<div class="heatmap-label-cell">${day.substring(0, 3)}</div>`;
         for (let h = 0; h < 24; h++) {
             const count = matrix[day][h] || 0;
@@ -1626,8 +1626,11 @@ function renderTemporalHeatmap() {
                 }
             }
 
+            // For Monday (row 0), show tooltip BELOW the cell to avoid top overflow
+            const tooltipClass = dayIndex === 0 ? 'heatmap-cell tooltip-below' : 'heatmap-cell';
+
             html += `
-                <div class="heatmap-cell" style="background-color: ${color}; border: 1px solid rgba(255,255,255,0.02);">
+                <div class="${tooltipClass}" style="background-color: ${color}; border: 1px solid rgba(255,255,255,0.02);">
                     <div class="heatmap-cell-tooltip">
                         <strong>${day}</strong><br>
                         ${formatHour(h)}<br>
@@ -1897,6 +1900,310 @@ function toggleExplainer(id) {
     }
 }
 
+// ── Dynamic Explain Modal ──
+function openExplainModal(chartId) {
+    const modal = document.getElementById('explain-modal');
+    const titleEl = document.getElementById('explain-modal-title');
+    const subtitleEl = document.getElementById('explain-modal-subtitle');
+    const bodyEl = document.getElementById('explain-modal-body');
+    if (!modal) return;
+    const config = buildExplainConfig(chartId);
+    titleEl.textContent = config.title;
+    subtitleEl.textContent = config.subtitle;
+    bodyEl.innerHTML = config.html;
+    modal.classList.add('active');
+    document.addEventListener('keydown', _explainEscHandler);
+}
+
+function closeExplainModal() {
+    const modal = document.getElementById('explain-modal');
+    if (modal) modal.classList.remove('active');
+    document.removeEventListener('keydown', _explainEscHandler);
+}
+
+function _explainEscHandler(e) {
+    if (e.key === 'Escape') closeExplainModal();
+}
+
+function initExplainModal() {
+    const closeBtn = document.getElementById('explain-modal-close');
+    const modal = document.getElementById('explain-modal');
+    if (closeBtn) closeBtn.addEventListener('click', closeExplainModal);
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeExplainModal();
+        });
+    }
+}
+
+function _insightCard(label, value, desc) {
+    return `<div class="explain-insight-item">
+        <div class="explain-insight-label">${label}</div>
+        <div class="explain-insight-value">${value}</div>
+        <div class="explain-insight-desc">${desc}</div>
+    </div>`;
+}
+
+function _finding(icon, text) {
+    return `<div class="explain-finding">
+        <span class="explain-finding-icon">${icon}</span>
+        <div class="explain-finding-text">${text}</div>
+    </div>`;
+}
+
+function buildExplainConfig(chartId) {
+    // ── Severity Distribution ──
+    if (chartId === 'severity-chart') {
+        const total = DATA.hotspotZones ? DATA.hotspotZones.length : 0;
+        const vh  = DATA.hotspotZones ? DATA.hotspotZones.filter(z => z.hotspot_band === 'Very High').length : 0;
+        const hi  = DATA.hotspotZones ? DATA.hotspotZones.filter(z => z.hotspot_band === 'High').length : 0;
+        const med = DATA.hotspotZones ? DATA.hotspotZones.filter(z => z.hotspot_band === 'Medium').length : 0;
+        const low = DATA.hotspotZones ? DATA.hotspotZones.filter(z => z.hotspot_band === 'Low').length : 0;
+        const vhPct = total ? ((vh / total) * 100).toFixed(1) : '—';
+        const topCritical = DATA.hotspotZones
+            ? [...DATA.hotspotZones].filter(z => z.hotspot_band === 'Very High')
+                .sort((a, b) => (b.hotspot_score || 0) - (a.hotspot_score || 0))
+                .slice(0, 3).map(z => z.zone_name).join(', ')
+            : '—';
+        return {
+            title: '📊 Zone Severity Distribution — What This Chart Tells You',
+            subtitle: `Based on ${total} hotspot zones detected by DBSCAN clustering`,
+            html: `
+            <p>This donut chart shows how Bengaluru's <strong>${total} detected parking hotspot zones</strong> are classified across four enforcement priority tiers. Classification is based on each zone's <em>Hotspot Score</em> — a composite metric computed from violation density, peak-hour concentration, junction proximity, and historical trend.</p>
+            <div class="explain-insight-grid">
+                ${_insightCard('Very High Risk', vh + ' zones', vhPct + '% of all zones — immediate deployment + towing required')}
+                ${_insightCard('High Risk', hi + ' zones', 'Active 2-officer patrol monitoring recommended')}
+                ${_insightCard('Medium Risk', med + ' zones', 'Single officer or mobile patrol sufficient')}
+                ${_insightCard('Low Risk', low + ' zones', 'No dedicated deployment needed today')}
+            </div>
+            ${_finding('🔴', `<strong>The ${vhPct}% Very High zones (${vh} locations) drive a disproportionately large share of Bengaluru's congestion.</strong> These are DBSCAN-confirmed clusters with the highest violation density, peak-hour concentration, and junction proximity scores combined.`)}
+            ${_finding('🎯', `<strong>Top critical zones include:</strong> ${topCritical}. These appear repeatedly across all enforcement records and must be prioritised in tomorrow's deployment schedule.`)}
+            ${_finding('📐', `The severity band is computed by splitting the continuous Hotspot Score (0–100) into four tier categories. A zone scores high when it has <strong>consistent violations across multiple time slots</strong>, not just a single spike.`)}
+            <p style="margin-top:14px;">💡 <em>Click any donut slice to filter the Hotspot Map to that severity tier and inspect individual zone markers.</em></p>`
+        };
+    }
+
+    // ── Hotspot Map ──
+    if (chartId === 'hotspot-map') {
+        const total    = DATA.mapData ? DATA.mapData.length : 0;
+        const vh       = DATA.mapData ? DATA.mapData.filter(z => z.hotspot_band === 'Very High').length : 0;
+        const stations = DATA.mapData ? [...new Set(DATA.mapData.map(z => z.top_police_station).filter(Boolean))].length : 0;
+        const topZone  = DATA.mapData && DATA.mapData.length
+            ? [...DATA.mapData].sort((a, b) => (b.hotspot_score || 0) - (a.hotspot_score || 0))[0]
+            : null;
+        const topName  = topZone ? topZone.zone_name : '—';
+        const topScore = topZone ? fmt(topZone.hotspot_score, 1) : '—';
+        return {
+            title: `🗺️ Hotspot Map — Reading Bengaluru’s Spatial Risk Landscape`,
+            subtitle: `Interactive map of ${total} geo-clustered parking violation zones across Bengaluru`,
+            html: `
+            <p>Each circle on the map represents one DBSCAN-detected hotspot zone. The <strong>circle colour</strong> reflects its risk band (🔴 red = Very High, 🟠 orange = High, 🟡 yellow = Medium, 🟢 green = Low). The <strong>circle size</strong> scales with the total historical violation count — larger circles are chronically worse zones.</p>
+            <div class="explain-insight-grid">
+                ${_insightCard('Total Zones Plotted', total, 'Each zone = a geo-cluster of ≥40 violations within 100m radius')}
+                ${_insightCard('Critical Red Zones', vh, 'Require towing vehicle + 3-officer barricade deployment')}
+                ${_insightCard('Police Stations', stations, 'Distinct jurisdictions covered across Bengaluru')}
+                ${_insightCard('Worst Hotspot', topName.split(' / ')[0] || '—', 'Hotspot Score: ' + topScore + ' — top priority zone')}
+            </div>
+            ${_finding('📍', `<strong>Cluster geography reveals systematic problems.</strong> The highest concentration of red zones appears around commercial corridors, metro stations, and major intersections — areas where parking demand exceeds supply, forcing illegal on-street parking that blocks carriageway lanes.`)}
+            ${_finding('🗺️', `<strong>Use the filters above the map</strong> (Hotspot Band, Police Station, Time Bucket) to isolate zones by jurisdiction or time period. This helps individual police stations plan their next-day beat patrols.`)}
+            ${_finding('🖱️', `<strong>Click any circle</strong> to see a popup with zone-specific data: Hotspot Score, Police Station jurisdiction, dominant peak time, predicted next-day violations, recommended action, and manpower estimate. The popup works clearly on all 4 map themes (Google, CartoDB Light, CartoDB Dark, OSM).`)}
+            <p style="margin-top:14px;">💡 <em>Switch between map themes (top-right layer button ◧) to verify readability on light and dark backgrounds.</em></p>`
+        };
+    }
+
+    // ── Temporal Heatmap ──
+    if (chartId === 'heatmap-grid') {
+        const rows = DATA.temporalHeatmap || [];
+        let peakHour = 0, peakDay = '', peakCount = 0;
+        rows.forEach(r => {
+            const c = parseInt(r.violation_count) || 0;
+            if (c > peakCount) { peakCount = c; peakHour = parseInt(r.hour); peakDay = r.day_name; }
+        });
+        const totalFromHeatmap = rows.reduce((s, r) => s + (parseInt(r.violation_count) || 0), 0);
+        const peakHourLabel = peakHour === 0 ? '12:00 AM' : peakHour > 12 ? `${peakHour-12}:00 PM` : `${peakHour}:00 AM`;
+        const weekdayCounts = {};
+        rows.forEach(r => { weekdayCounts[r.day_name] = (weekdayCounts[r.day_name] || 0) + (parseInt(r.violation_count) || 0); });
+        const busiestDay = Object.entries(weekdayCounts).sort((a, b) => b[1] - a[1])[0] || ['—', 0];
+        return {
+            title: '📅 Temporal Violation Hotspot Grid — Hour × Day Pattern Analysis',
+            subtitle: `Aggregated from ${fmt(totalFromHeatmap)} violations across all 539 zones`,
+            html: `
+            <p>This 7×24 heat matrix aggregates <strong>all ${fmt(totalFromHeatmap)} historical violations</strong> by day-of-week and hour-of-day. Each cell's colour intensity indicates the relative number of violations in that time slot — darker red cells are Bengaluru's most dangerous enforcement windows that the command centre must prioritise.</p>
+            <div class="explain-insight-grid">
+                ${_insightCard('Peak Hour', peakHourLabel, `${peakDay} — single highest-count slot with ${fmt(peakCount)} violations`)}
+                ${_insightCard('Busiest Day', busiestDay[0], `${fmt(busiestDay[1])} total violations across all hours of this day`)}
+                ${_insightCard('Grid Cells', '168 total', '7 days × 24 hours — full weekly enforcement cycle')}
+                ${_insightCard('Color Scale', 'Green → Red', 'Low → High violation density for instant visual triage')}
+            </div>
+            ${_finding('🌅', `<strong>Morning peak (7–11 AM weekdays) dominates.</strong> Commuter traffic, school drop-offs, and commercial delivery trucks all converge simultaneously, creating the worst on-street parking conditions. Hover over any cell to see the exact count.`)}
+            ${_finding('📆', `<strong>${busiestDay[0]} is the busiest day overall</strong> with ${fmt(busiestDay[1])} violations. Command centres should ensure full officer deployment on this day every week — shift rotations should be planned around it.`)}
+            ${_finding('🌙', `<strong>Late-night hours (10 PM–4 AM) are NOT zero</strong> — certain commercial areas like restaurant districts and entertainment zones remain active hotspots. Night patrols should cover at least the Very High zones during these windows.`)}
+            ${_finding('💡', `<strong>How to read this:</strong> Hover any cell to see the exact violation count for that hour+day. Deploy officers <em>30 minutes before</em> the red peak window opens for maximum deterrence. The first row (Monday) shows tooltips below the cell to stay readable.`)}`
+        };
+    }
+
+    // ── Feature Importance Chart ──
+    if (chartId === 'feature-importance-chart') {
+        const top = DATA.featureSorted ? DATA.featureSorted.slice(0, 5) : [];
+        const top1 = top[0] ? top[0].feature : '—';
+        const top1v = top[0] ? (top[0].average * 100).toFixed(2) + '%' : '—';
+        const top2 = top[1] ? top[1].feature : '—';
+        const top2v = top[1] ? (top[1].average * 100).toFixed(2) + '%' : '—';
+        const top3 = top[2] ? top[2].feature : '—';
+        return {
+            title: `🧠 Feature Importance — What Drives the AI’s Predictions?`,
+            subtitle: 'Cross-model average importance from LightGBM, XGBoost, and Random Forest',
+            html: `
+            <p>This horizontal bar chart shows the <strong>top 15 features</strong> most strongly influencing the ensemble model's prediction of next-day violations. Importance is averaged across all three models — features scoring high on all three are the most reliable, robust predictors of tomorrow's enforcement priorities.</p>
+            <div class="explain-insight-grid">
+                ${_insightCard('Top Feature', top1, top1v + ' average importance — single strongest predictor')}
+                ${_insightCard('2nd Feature', top2, top2v + ' average importance')}
+                ${_insightCard('3rd Feature', top3 || '—', 'Third most predictive signal in the ensemble')}
+                ${_insightCard('Total Features Trained', '50+', 'Engineered from raw CCTV records; lag, rolling, seasonal')}
+            </div>
+            ${_finding('📈', `<strong>${top1}</strong> is the strongest predictor — a zone's <em>recent violation trend</em> (last 7 days) outpredicts any static zone property like location or road type. This means enforcement needs to be dynamically reassigned as patterns shift week over week.`)}
+            ${_finding('🔁', `<strong>Lag features (lag_1, lag_7, lag_14)</strong> together account for a large share of prediction variance. Zones that were busy yesterday and last week will likely be busy tomorrow — strong autoregressive behavior.`)}
+            ${_finding('⏰', `<strong>Temporal features</strong> like dominant_time_bucket and peak_share encode enforcement windows. The model knows that a zone with 70%+ violations in morning peak is almost certain to spike again during the same time tomorrow.`)}
+            ${_finding('🖱️', `<strong>Hover over any bar</strong> to read the feature's description and exact importance score. The tooltip explains what the feature represents in operational police-deployment terms.`)}`
+        };
+    }
+
+    // ── Per-model Feature Breakdown ──
+    if (chartId === 'feature-model-chart') {
+        const top10 = DATA.featureSorted ? DATA.featureSorted.slice(0, 10) : [];
+        const lgbmTop = top10.length ? top10.reduce((b, f) => ((f.lightgbm || 0) > (b.lightgbm || 0) ? f : b), top10[0]) : null;
+        const xgbTop  = top10.length ? top10.reduce((b, f) => ((f.xgboost  || 0) > (b.xgboost  || 0) ? f : b), top10[0]) : null;
+        return {
+            title: `🤖 Per-Model Feature Importance — How Do the 3 Models Differ?`,
+            subtitle: 'Grouped bars compare how LightGBM, XGBoost, and Random Forest weight the same features',
+            html: `
+            <p>While the previous chart shows average importance, this grouped bar chart reveals <strong>how each model weights features differently</strong>. Model diversity is essential for a good ensemble — if all three models agreed on every feature, combining them would add no benefit.</p>
+            <div class="explain-insight-grid">
+                ${_insightCard('LightGBM Top', lgbmTop ? lgbmTop.feature : '—', 'LightGBM\'s single highest-weight predictor')}
+                ${_insightCard('XGBoost Top', xgbTop ? xgbTop.feature : '—', 'XGBoost\'s highest-weight predictor')}
+                ${_insightCard('Blend Strategy', 'Inverse-MAE', 'Lower-error models get higher weight in final blend')}
+                ${_insightCard('Agreement', 'High on top-3', 'All models agree on the most critical features')}
+            </div>
+            ${_finding('📊', `<strong>LightGBM and XGBoost show the most disagreement on spatial features</strong> (latitude, longitude) — LightGBM learns geographic patterns more aggressively while XGBoost spreads weight more evenly. Random Forest acts as a regularising stabiliser.`)}
+            ${_finding('🎯', `<strong>The ensemble benefits most when models disagree.</strong> When LightGBM over-predicts a zone and XGBoost under-predicts, the weighted average lands closer to truth. This is why P@10 improves over any single model.`)}
+            ${_finding('⚖️', `<strong>Inverse-MAE blending</strong> means the model with the lowest validation error receives the most weight. This automatically down-weights weaker models without requiring manual tuning of blend ratios.`)}`
+        };
+    }
+
+    // ── Actual vs Predicted Scatter ──
+    if (chartId === 'scatter-chart') {
+        const errors    = DATA.errorSorted || [];
+        const absErrors = errors.map(r => Number(r.absolute_error) || 0);
+        const mean      = absErrors.length ? absErrors.reduce((a, b) => a + b, 0) / absErrors.length : 0;
+        const under1    = absErrors.filter(e => e < 1).length;
+        const under5    = absErrors.filter(e => e < 5).length;
+        const totalZones= errors.length;
+        const worstZone = errors.length ? [...errors].sort((a, b) => (b.absolute_error || 0) - (a.absolute_error || 0))[0] : null;
+        return {
+            title: '🎯 Actual vs Predicted Scatter — Model Accuracy on Test Set',
+            subtitle: `Each dot is one hotspot zone from the held-out test period (final ~12.5% of chronological data)`,
+            html: `
+            <p>This scatter plot shows how well the ensemble predicted next-day violations across <strong>${totalZones} zones</strong> on data it had never seen during training. X-axis = actual violations recorded, Y-axis = what the model predicted. The <em>red dashed diagonal</em> is the perfect-prediction line — dots close to it are highly accurate.</p>
+            <div class="explain-insight-grid">
+                ${_insightCard('Mean Abs Error', fmt(mean, 2) + ' violations', 'Average prediction error across all test zones')}
+                ${_insightCard('Zones within 1', under1 + '/' + totalZones, ((under1/Math.max(totalZones,1))*100).toFixed(1) + '% predicted near-perfectly')}
+                ${_insightCard('Zones within 5', under5 + '/' + totalZones, ((under5/Math.max(totalZones,1))*100).toFixed(1) + '% — operationally acceptable accuracy')}
+                ${_insightCard('Hardest Zone', worstZone ? worstZone.zone_id : '—', worstZone ? 'Error: ' + fmt(worstZone.absolute_error, 2) + ' violations — likely a surge event' : '')}
+            </div>
+            ${_finding('✅', `<strong>${((under1/Math.max(totalZones,1))*100).toFixed(1)}% of zones had near-perfect predictions</strong> (error < 1). These are stable zones where historical patterns are highly repeatable — the model can confidently flag or clear these for tomorrow.`)}
+            ${_finding('⚠️', `<strong>High-error zones cluster at the top-right</strong> (high actual, lower predicted). These represent surge events — festivals, markets, road closures — that no pattern-based model can predict without real-time event data.`)}
+            ${_finding('🖱️', `<strong>Click any dot</strong> to inspect that zone's details in the Zone Inspector panel below: zone name, police station, actual vs predicted count, absolute error, recommended manpower, and watch window.`)}`
+        };
+    }
+
+    // ── Error Distribution ──
+    if (chartId === 'error-dist-chart') {
+        const errors    = DATA.errorSorted || [];
+        const absErrors = errors.map(r => Number(r.absolute_error) || 0);
+        const under1    = absErrors.filter(e => e < 1).length;
+        const under5    = absErrors.filter(e => e < 5).length;
+        const over20    = absErrors.filter(e => e >= 20).length;
+        const totalZones= errors.length;
+        return {
+            title: '📊 Error Distribution — Where Does the Model Succeed and Fail?',
+            subtitle: `Histogram of absolute prediction errors across ${totalZones} test zones, binned by error magnitude`,
+            html: `
+            <p>This histogram shows how many of the <strong>${totalZones} test zones</strong> fall into each error bracket. An operationally useful model doesn't need to be perfect on every zone — it needs to correctly identify <em>which zones will be problematic tomorrow</em>, even if the exact count is slightly off.</p>
+            <div class="explain-insight-grid">
+                ${_insightCard('Error < 1', under1 + ' zones', ((under1/Math.max(totalZones,1))*100).toFixed(1) + '% — near-perfect, safe to auto-approve deployment')}
+                ${_insightCard('Error < 5', under5 + ' zones', ((under5/Math.max(totalZones,1))*100).toFixed(1) + '% — operationally acceptable for most decisions')}
+                ${_insightCard('Error ≥ 20', over20 + ' zones', 'Surge events beyond model capacity — manual review needed')}
+                ${_insightCard('Anti-leakage', 'Strict split', 'Test set is chronologically future-only — no data leakage')}
+            </div>
+            ${_finding('📉', `<strong>Most zones cluster at low error values (0–5)</strong>. This is expected — the majority of zones have stable, repeatable patterns. The ensemble's value comes from correctly <em>ranking</em> these zones by risk, not from predicting exact counts.`)}
+            ${_finding('🌊', `<strong>The high-error tail (errors > 20)</strong> represents genuine surge events: major festivals, road construction, cricket matches. These anomalies require a real-time event data feed to predict — currently out of scope but recommended for V2.`)}
+            ${_finding('🖱️', `<strong>Click any bar</strong> to filter both prediction tables (Best Zones / Worst Zones) below to show only zones in that error range. This lets you audit specific error buckets and plan manual review workflows.`)}`
+        };
+    }
+
+    // ── Validation Comparison ──
+    if (chartId === 'val-comparison-chart') {
+        const models    = DATA.modelLeaderboard || [];
+        const ensRow    = models.find(m => (m.model_name || m.model || '').includes('Ensemble'));
+        const baseRow   = models.find(m => (m.model_name || m.model || '').includes('Persistence'));
+        const ensP10    = ensRow  ? (parseFloat(ensRow.val_p10)  * 100).toFixed(1) + '%' : '68.7%';
+        const baseP10   = baseRow ? (parseFloat(baseRow.val_p10) * 100).toFixed(1) + '%' : '56.0%';
+        const improve   = ensRow && baseRow
+            ? ((parseFloat(ensRow.val_p10) - parseFloat(baseRow.val_p10)) * 100).toFixed(1) + 'pp'
+            : '+12.7pp';
+        return {
+            title: '📈 Validation Performance — Proving the AI Adds Value',
+            subtitle: 'Daily Precision@10 (P@10) on the validation split, comparing all benchmarked models',
+            html: `
+            <p><strong>Daily Precision@10 (P@10)</strong> is the key operational metric: of the top 10 zones the model flags for deployment each day, what percentage are genuinely among the actual worst 10? A score of 100% is impossible in practice — 68.7%+ means 7 of 10 flagged zones are correctly prioritised.</p>
+            <div class="explain-insight-grid">
+                ${_insightCard('Ensemble Val P@10', ensP10, 'Final weighted ensemble — best validation performance')}
+                ${_insightCard('Baseline Val P@10', baseP10, 'Naive persistence: just repeat yesterday\'s count')}
+                ${_insightCard('AI Improvement', improve, 'Percentage point uplift over naive baseline')}
+                ${_insightCard('Validation Period', '~12.5%', 'Chronological split — used for Optuna hyperparameter tuning')}
+            </div>
+            ${_finding('🏆', `<strong>The ensemble achieves ${ensP10} validation P@10</strong> — nearly 7 of every 10 flagged deployment slots are correctly targeted. In operational terms, this means fewer wasted officer deployments and higher enforcement ROI.`)}
+            ${_finding('📊', `<strong>Compared to the naive baseline (${baseP10})</strong>, the AI provides ${improve} uplift. This is achieved through feature engineering (lag, rolling, seasonal), Optuna tuning (100+ trials per model), and inverse-MAE ensemble blending.`)}
+            ${_finding('⚠️', `<strong>Validation P@10 is used for model selection, not final evaluation.</strong> Because Optuna was tuned on this split, it may slightly overestimate future performance. See the Test Set chart for honest unseen-data accuracy.`)}`
+        };
+    }
+
+    // ── Test Comparison ──
+    if (chartId === 'test-comparison-chart') {
+        const models  = DATA.modelLeaderboard || [];
+        const ensRow  = models.find(m => (m.model_name || m.model || '').includes('Ensemble'));
+        const baseRow = models.find(m => (m.model_name || m.model || '').includes('Persistence'));
+        const ensP10  = ensRow  ? (parseFloat(ensRow.test_p10)  * 100).toFixed(1) + '%' : '59.4%';
+        const baseP10 = baseRow ? (parseFloat(baseRow.test_p10) * 100).toFixed(1) + '%' : '51.9%';
+        const ensMae  = ensRow  ? parseFloat(ensRow.test_mae).toFixed(3)  : '2.492';
+        const improve = ensRow && baseRow
+            ? ((parseFloat(ensRow.test_p10) - parseFloat(baseRow.test_p10)) * 100).toFixed(1) + 'pp'
+            : '+7.5pp';
+        return {
+            title: '🧪 Test Set Performance — Honest Real-World Accuracy',
+            subtitle: 'Final held-out test evaluation — model had zero exposure to this data during all training phases',
+            html: `
+            <p>The test set is the most honest measure of production-ready performance. This data was <strong>completely held out</strong> during training, validation tuning, and hyperparameter optimisation. Chronological splits ensure zero future-data leakage — this is what real-world daily accuracy looks like.</p>
+            <div class="explain-insight-grid">
+                ${_insightCard('Ensemble Test P@10', ensP10, 'True unseen-data deployment precision')}
+                ${_insightCard('Baseline Test P@10', baseP10, 'Naive persistence on completely unseen data')}
+                ${_insightCard('Test MAE', ensMae + ' violations', 'Mean absolute error in actual violation count units')}
+                ${_insightCard('AI Uplift on Test', improve, 'Proven improvement on data the model never saw')}
+            </div>
+            ${_finding('✅', `<strong>The ensemble achieves ${ensP10} test P@10</strong> — a meaningful improvement over ${baseP10} baseline on genuinely unseen data. This confirms the model generalises beyond its training window rather than just memorising historical patterns.`)}
+            ${_finding('📉', `<strong>Test P@10 is lower than validation P@10</strong> — this is expected. The validation split was used for Optuna tuning, so the model slightly overfits to it. The gap indicates mild but acceptable overfitting, common in gradient-boosted ensembles.`)}
+            ${_finding('📅', `<strong>Chronological split is critical for this domain.</strong> A random 80/20 split would artificially inflate performance by allowing the model to train on future data. The strict time-based split ensures that test results represent genuinely forward-looking enforcement capability.`)}`
+        };
+    }
+
+    // Fallback
+    return {
+        title: '📖 Chart Explanation',
+        subtitle: 'Dynamic analysis based on your loaded data',
+        html: '<p>This chart provides data-driven insights to help enforcement command centres make better deployment decisions. Select a specific chart or map to see a detailed explanation of what it shows and why it matters.</p>'
+    };
+}
+
 // ── Boot ──
 async function init() {
     init3DBackground();
@@ -1916,6 +2223,7 @@ async function init() {
     renderDownloads();
     enableTableSort();
     initCardTilts();
+    initExplainModal();
 
     // Hide loader
     const overlay = document.getElementById('loading-overlay');

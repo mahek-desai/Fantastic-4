@@ -176,8 +176,13 @@
 
             <!-- Severity Distribution -->
             <div class="card">
-                <div class="card-header">
+                <div class="card-header card-header-with-explain">
                     <h3>Zone Severity Distribution</h3>
+                    <button class="explain-btn" onclick="openExplainModal('severity-chart')"
+                        aria-label="Explain Severity Distribution Chart">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        Explain
+                    </button>
                 </div>
                 <div class="card-body chart-container">
                     <canvas id="severity-chart"></canvas>
@@ -316,6 +321,13 @@
                     <div class="legend-item"><span class="legend-dot" style="background:#22c55e"></span> Low</div>
                 </div>
             </div>
+            <!-- Map Explain Button (below the map) -->
+            <div style="margin-top: 16px; display: flex; justify-content: flex-end;">
+                <button class="explain-btn" onclick="openExplainModal('hotspot-map')" aria-label="Explain Hotspot Map">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    Explain This Map
+                </button>
+            </div>
         </section>
 
         <!-- Page: Rankings -->
@@ -404,8 +416,12 @@
 
             <!-- Temporal Heatmap (P1) -->
             <div class="card temporal-heatmap-card">
-                <div class="card-header">
+                <div class="card-header card-header-with-explain">
                     <h3>📅 Temporal Violation Hotspot Grid</h3>
+                    <button class="explain-btn" onclick="openExplainModal('heatmap-grid')" aria-label="Explain Temporal Heatmap">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        Explain
+                    </button>
                 </div>
                 <div class="card-body">
                     <p class="section-subtitle-description">Aggregated violation heatmap showing hour-of-day vs day-of-week traffic risk density. Hover over cells to see violation counts.</p>
@@ -686,8 +702,12 @@
             <div class="explain-grid">
                 <!-- Feature Importance Chart -->
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header card-header-with-explain">
                         <h3>Feature Importance (Top 15 — Cross-Model Average)</h3>
+                        <button class="explain-btn" onclick="openExplainModal('feature-importance-chart')" aria-label="Explain Feature Importance Chart">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            Explain
+                        </button>
                     </div>
                     <div class="card-body chart-container-tall">
                         <canvas id="feature-importance-chart"></canvas>
@@ -720,14 +740,19 @@
 
             <!-- Per-model breakdown -->
             <div class="card">
-                <div class="card-header">
+                <div class="card-header card-header-with-explain">
                     <h3>Per-Model Feature Importance Breakdown</h3>
+                    <button class="explain-btn" onclick="openExplainModal('feature-model-chart')" aria-label="Explain Per-Model Feature Importance">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        Explain
+                    </button>
                 </div>
                 <div class="card-body chart-container">
                     <canvas id="feature-model-chart"></canvas>
                 </div>
             </div>
         </section>
+
 
         <!-- Page: Error Analysis -->
         <section id="page-errors" class="page">
@@ -741,8 +766,12 @@
             <div class="error-grid">
                 <!-- Scatter Plot -->
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header card-header-with-explain">
                         <h3>Actual vs Predicted (Test Set)</h3>
+                        <button class="explain-btn" onclick="openExplainModal('scatter-chart')" aria-label="Explain Scatter Chart">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            Explain
+                        </button>
                     </div>
                     <div class="card-body chart-container">
                         <canvas id="scatter-chart"></canvas>
@@ -751,8 +780,12 @@
 
                 <!-- Error Distribution -->
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header card-header-with-explain">
                         <h3>Absolute Error Distribution</h3>
+                        <button class="explain-btn" onclick="openExplainModal('error-dist-chart')" aria-label="Explain Error Distribution">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            Explain
+                        </button>
                     </div>
                     <div class="card-body chart-container">
                         <canvas id="error-dist-chart"></canvas>
@@ -933,16 +966,24 @@
             <!-- Comparison Charts -->
             <div class="comparison-grid">
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header card-header-with-explain">
                         <h3>Validation Set Performance</h3>
+                        <button class="explain-btn" onclick="openExplainModal('val-comparison-chart')" aria-label="Explain Validation Performance">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            Explain
+                        </button>
                     </div>
                     <div class="card-body chart-container">
                         <canvas id="val-comparison-chart"></canvas>
                     </div>
                 </div>
                 <div class="card">
-                    <div class="card-header">
+                    <div class="card-header card-header-with-explain">
                         <h3>Test Set Performance</h3>
+                        <button class="explain-btn" onclick="openExplainModal('test-comparison-chart')" aria-label="Explain Test Performance">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            Explain
+                        </button>
                     </div>
                     <div class="card-body chart-container">
                         <canvas id="test-comparison-chart"></canvas>
@@ -1147,6 +1188,16 @@
             <div class="lightbox-img-wrapper">
                 <img src="../dataset/shap_summary.png" class="lightbox-img">
             </div>
+        </div>
+    </div>
+
+    <!-- Dynamic Explain Modal -->
+    <div id="explain-modal" class="explain-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="explain-modal-title">
+        <div class="explain-modal-box">
+            <button class="explain-modal-close" id="explain-modal-close" aria-label="Close explanation">&times;</button>
+            <div id="explain-modal-title" class="explain-modal-title">Chart Explanation</div>
+            <div id="explain-modal-subtitle" class="explain-modal-subtitle">Dynamic analysis based on your loaded data</div>
+            <div id="explain-modal-body" class="explain-modal-body"></div>
         </div>
     </div>
 
